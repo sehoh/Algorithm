@@ -1,38 +1,39 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 class Solution {
     public int[] solution(String[] id_list, String[] report, int k) {
-        Map<String, Set<String>> history = new HashMap<>();
-            Map<String, Integer> ban_list = new HashMap<>();
-            Map<String, Integer> mail = new HashMap<>();
-            for (String s : report) {
-                String a = s.split(" ")[0];
-                String b = s.split(" ")[1];
-                history.putIfAbsent(a, new HashSet<String>());
-                history.get(a).add(b);
-            }
+        Set<String> set = Arrays.stream(report).collect(Collectors.toSet());
 
-            for (String user : history.keySet()) {
-                for(String reportee : history.get(user)){
-                    ban_list.put(reportee, ban_list.getOrDefault(reportee, 0) + 1);
-//                    int cnt = ban_list.get(reportee);
-//                    if(cnt >= k){
-//                        mail.put(user, mail.getOrDefault(user, 0) + 1);
-//                    }
-                }
-            }
-            for(String user : history.keySet()){
-                for(String reportee : history.get(user)){
-                    if(ban_list.get(reportee) >= k){
-                        mail.put(user, mail.getOrDefault(user, 0) + 1);
-                    }
-                }
-            }
+        // key , value => 신고당한 사람, 신고자
+        Map<String, List<String>> reportHash = new HashMap<>();
+        List<String> banned = new ArrayList<>();
+        for (String str : set) {
+            String[] tokens = str.split(" ");
+            reportHash.putIfAbsent(tokens[1], new ArrayList<>());
+            reportHash.get(tokens[1]).add(tokens[0]);
+        }
 
-            int[] answer = new int[id_list.length];
-            for(int i =0; i< id_list.length; i++){
-                answer[i] = mail.getOrDefault(id_list[i], 0);
+        for (String key : reportHash.keySet()) {
+            if (reportHash.get(key).size() >= k) {
+                banned.add(key);
             }
-            return answer;
+        }
+        Map<String, Integer> count = new HashMap<>();
+        // banned for문을 돌면서 reportHash의 value값 들에 대한 Hash를 추가해서 count
+
+        for (String banned_id : banned) {
+            for (String reporter : reportHash.get(banned_id)) {
+                count.put(reporter, count.getOrDefault(reporter, 0) + 1);
+            }
+        }
+
+        int[] answer = new int[id_list.length];
+        for (int i = 0; i < id_list.length; i++) {
+            if (count.containsKey(id_list[i])) {
+                answer[i] = count.get(id_list[i]);
+            } else answer[i] = 0;
+        }
+        return answer;
     }
 }
